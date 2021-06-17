@@ -1,108 +1,86 @@
+var cardstate = false;
+var firstTime = true;
+var card = document.getElementById("card");
+var info = document.querySelector(".info");
+var text = document.querySelectorAll(".cardtext");
 
-import * as THREE from 'https://cdn.skypack.dev/three@0.129.0';
-import vertexShader from './shaders/vertex.glsl'
-import fragmentShader from './shaders/fragment.glsl'
-import { OrbitControls } from 'https://cdn.skypack.dev/three/examples/jsm/controls/OrbitControls.js';
-
-console.log(vertexShader);
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, (innerWidth+200)/innerHeight, 0.1, 1000);
-console.log(innerWidth+200);
-const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  alpha: true
-});
-
-// console.log(scene);
-// console.log(camera);
-// console.log(renderer);
-
-renderer.setSize(innerWidth+200,innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-document.body.appendChild(renderer.domElement);
-
-const sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 50, 50), new THREE.ShaderMaterial({
-  vertexShader,
-  fragmentShader,
-  uniforms:{
-    EarthTexture:{
-      value: new THREE.TextureLoader().load('./img/Earth.png')
+function cardState(){
+  cardstate = !cardstate;
+  if(firstTime)
+    hideHints();
+  if (cardstate){
+    card.classList.add("transition");
+    card.classList.add("cardUP");
+    for(var i = 0; i<text.length; i++){
+      text[i].classList.add("transition");
+      text[i].classList.add("cardtextUP");
+    }
+  }else{
+    card.classList.add("transition");
+    card.classList.remove("cardUP");
+    for(var i = 0; i<text.length; i++){
+      text[i].classList.add("transition");
+      text[i].classList.remove("cardtextUP");
     }
   }
-}));
-// console.log(sphere);
-
-scene.add(sphere);
-
-const group = new THREE.Group();
-group.add(sphere);
-scene.add(group);
-
-camera.position.z = 15;
-
-var controls = new OrbitControls(camera, renderer.domElement);
-
-controls.enableZoom = false;
-controls.minPolarAngle =  Math.PI/2;
-controls.maxPolarAngle =  Math.PI/2;
-controls.enablePan = false;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.2;
-controls.enableDamping = true;
-controls.dampingFactor = 0.04;
-
-
-
-window.addEventListener( 'resize', onWindowResize, false );
-
-function onWindowResize(){
-
-    camera.aspect = (window.innerWidth+200) / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( (window.innerWidth+200), window.innerHeight );
+  setTimeout(function(){
+    card.classList.remove("transition");
+    for(var i = 0; i<text.length; i++){
+      text[i].classList.remove("transition");
+    }
+  },500);
 
 }
 
-
-//i devided the sphere into 4 quarters based on the x and x position of the camera, in eatch quarter i take the x position of the camera and map it to the matching part of the time zone. the finction returns the round number of the timezome.
-function timezone(x, z){
-  if((x<0)&&(z<0)){
-    return "+" + mapRange(x,-15,0,12,7);
-  }else if ((x>0)&&(z<0)) {
-    return "+" + mapRange(x,0,15,7,1.2);
-  }else if ((x>0)&&(z>0)) {
-    return mapRange(x,15,0,0,-6);
-  }else if ((x<0)&&(z>0)) {
-    return mapRange(x,0,-15,-6,-12);;
+function cardShow(){
+  if (innerHeight>innerWidth){
+    card.style.display = "none";
+    info.style.display = "none";
   }else{
-    return "oops";
+    card.style.display = "block";
+    info.style.display = "block";
   }
 }
 
-// linearly maps value from the range (a..b) to (c..d)
-function mapRange (value, a, b, c, d) {
-    // first map value from (a..b) to (0..1)
-    value = (value - a) / (b - a);
-    // then map it from (0..1) to (c..d) and return it
-    return Math.round(c + value * (d - c));
+function hideHints(){
+  firstTime=false;
+  info.style.transition = "all 0.3s ease-in";
+  info.style.opacity = "0";
+  setTimeout(function(){
+    info.style.display = "none";
+  },500);
 }
 
-function writeXYZ(){
-  var targetTime = new Date();
-  var timeZoneFromDB = timezone(camera.position.x,camera.position.z); //time zone value from database
-  //get the timezone offset from local time in minutes
-  var tzDifference = timeZoneFromDB * 60 + targetTime.getTimezoneOffset();
-  //convert the offset to milliseconds, add to targetTime, and make a new Date
-  var offsetTime = new Date(targetTime.getTime() + tzDifference * 60 * 1000);
-  document.getElementById('time').innerHTML = offsetTime.getHours() + ":" + offsetTime.getUTCMinutes() + ":" + offsetTime.getUTCSeconds();
-  document.getElementById('timezone').innerHTML = timezone(camera.position.x,camera.position.z) + " GMT";
+function show(){
+  var bg = document.getElementById("loader");
+  bg.style.transition = "all 0.5s ease-in";
+  bg.style.background = "radial-gradient(100% 200% at 0% 0%, #000000 0%, rgba(0, 0, 0, 0) 100%)";
+  bg.style.backgroundColor = "rgba(0,0,0,0)";
+
+  document.getElementById("progress").style.transition = "all 0.1s ease-in";
+  document.getElementById("progress").style.opacity = "0";
+
+  setTimeout(function(){
+    document.querySelectorAll(".loadingS")[0].style.transition = "all 0.5s ease-in";
+    document.querySelectorAll(".title")[0].style.transition = "all 0.5s ease-in";
+    document.querySelectorAll(".loadingS")[0].style.opacity = "0";
+    document.querySelectorAll(".title")[0].style.left = "-33vw";
+  },1000);
+  setTimeout(function(){
+    bg.style.opacity = "0";
+  },1500);
+
+  setTimeout(function(){
+    bg.style.display = "none";
+  },2000);
 }
 
-function animate(){
-  controls.update();
-  writeXYZ();
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
+function doneLoadingPage(){
+  document.getElementById("progress").innerHTML="click to enter";
 }
-animate();
+
+window.onload = function() {
+  doneLoadingPage();
+};
+
+window.addEventListener('resize', cardShow, false);
