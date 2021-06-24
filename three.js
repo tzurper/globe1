@@ -1,27 +1,22 @@
-
 import * as THREE from 'https://cdn.skypack.dev/three@0.129.0';
+//i basiclly took some code for a shpere custom shader and changed the properties to make it fit my style
 import vertexShader from './shaders/vertex.glsl'
 import fragmentShader from './shaders/fragment.glsl'
-import { OrbitControls } from 'https://cdn.skypack.dev/three/examples/jsm/controls/OrbitControls.js';
 
-console.log(vertexShader);
+import { OrbitControls } from 'https://cdn.skypack.dev/three/examples/jsm/controls/OrbitControls.js';
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, (innerWidth+200)/innerHeight, 0.1, 1000);
-console.log(innerWidth+200);
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   alpha: true
 });
-
-// console.log(scene);
-// console.log(camera);
-// console.log(renderer);
-
+//made the width bigger then the display because i rtotated the 3js canvas in order to make the globe spin in the right angle, i added more pixels to make it responsive for smaller displays and not have is cut off
 renderer.setSize(innerWidth+200,innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
+//setting up the shepre with the custom shaders and the uv map of the earth that i made
 const sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 50, 50), new THREE.ShaderMaterial({
   vertexShader,
   fragmentShader,
@@ -31,18 +26,13 @@ const sphere = new THREE.Mesh(new THREE.SphereGeometry(5, 50, 50), new THREE.Sha
     }
   }
 }));
-// console.log(sphere);
-
 scene.add(sphere);
 
-const group = new THREE.Group();
-group.add(sphere);
-scene.add(group);
-
+//setting the distance from the center of the canvas (and the sphere)
 camera.position.z = 15;
 
+//setting all the parameters for the orbit controls
 var controls = new OrbitControls(camera, renderer.domElement);
-
 controls.enableZoom = false;
 controls.minPolarAngle =  Math.PI/2;
 controls.maxPolarAngle =  Math.PI/2;
@@ -56,16 +46,15 @@ controls.dampingFactor = 0.04;
 
 window.addEventListener( 'resize', onWindowResize, false );
 
+//this function makes the canvas responsive
 function onWindowResize(){
-
     camera.aspect = (window.innerWidth+200) / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( (window.innerWidth+200), window.innerHeight );
-
 }
 
 
-//i devided the sphere into 4 quarters based on the x and x position of the camera, in eatch quarter i take the x position of the camera and map it to the matching part of the time zone. the finction returns the round number of the timezome.
+// I devided the sphere into 4 quarters based on the x and z position of the camera, in eatch quarter it takes the x position of the camera and map it to the matching part of the time zone. the function returns the round number of the timezome.
 function timezone(x, z){
   if((x<0)&&(z<0)){
     return "+" + mapRange(x,-15,0,12,7);
@@ -80,19 +69,18 @@ function timezone(x, z){
   }
 }
 
-// linearly maps value from the range (a..b) to (c..d)
+// maps value from the range (a..b) to (c..d)
 function mapRange (value, a, b, c, d) {
-    // first map value from (a..b) to (0..1)
     value = (value - a) / (b - a);
-    // then map it from (0..1) to (c..d) and return it
     return Math.round(c + value * (d - c));
 }
 
+// this function checks and validates the time zone it gets from the function above, then writes it to the html card, before i had a problem that the time can get bigger then 24 by simply adding it to the utc timezone, by making a new date from the utc timezone and the globe one it eliminates the problem.
 function writeXYZ(){
   var targetTime = new Date();
-  var timeZoneFromDB = timezone(camera.position.x,camera.position.z); //time zone value from database
-  //get the timezone offset from local time in minutes
-  var tzDifference = timeZoneFromDB * 60 + targetTime.getTimezoneOffset();
+  var timeZoneFromGlobe = timezone(camera.position.x,camera.position.z); //time zone value from the function above
+  //gets the timezone offset
+  var tzDifference = timeZoneFromGlobe * 60 + targetTime.getTimezoneOffset();
   //convert the offset to milliseconds, add to targetTime, and make a new Date
   var offsetTime = new Date(targetTime.getTime() + tzDifference * 60 * 1000);
   document.getElementById('time').innerHTML = offsetTime.getHours() + ":" + offsetTime.getUTCMinutes() + ":" + offsetTime.getUTCSeconds();

@@ -4,6 +4,7 @@ var card = document.getElementById("card");
 var info = document.querySelector(".info");
 var text = document.querySelectorAll(".cardtext");
 
+// this function controls the info card state (if its laying down or showing up) and the hints related to it, every time the card is clicked it adds the transition class to make the css transition and removes it after to make the card stay responsive with the rest of the page
 function cardState(){
   cardstate = !cardstate;
   if(firstTime)
@@ -29,9 +30,9 @@ function cardState(){
       text[i].classList.remove("transition");
     }
   },500);
-
 }
 
+// makes the info card visable only if there is the space for it
 function cardShow(){
   if (innerHeight>innerWidth){
     card.style.display = "none";
@@ -42,6 +43,7 @@ function cardShow(){
   }
 }
 
+// if the card was pressed already it hides the hits
 function hideHints(){
   firstTime=false;
   info.style.transition = "all 0.3s ease-in";
@@ -51,6 +53,7 @@ function hideHints(){
   },500);
 }
 
+// this function controlls all the animation of the welcome screen
 function show(){
   var bg = document.getElementById("loader");
   bg.style.transition = "all 0.5s ease-in";
